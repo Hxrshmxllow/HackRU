@@ -1,39 +1,38 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+import { Stack, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { View, ActivityIndicator } from "react-native";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [routerReady, setRouterReady] = useState(false);
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
+    if (!router || !router.replace) {
+      console.warn("🚨 Router is not ready yet!");
+      return;
     }
-  }, [loaded]);
+    setTimeout(() => {
+      router.replace("/(auth)/login"); 
+    }, 100); 
 
-  if (!loaded) {
-    return null;
+    setLoading(false);
+  }, []); 
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack>
+      <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+      <Stack.Screen name="(auth)/register" options={{ headerShown: false }} />
+      <Stack.Screen name="(driver)/home" />
+      <Stack.Screen name="(rider)/home" />
+      <Stack.Screen name="(driver)/route" />
+    </Stack>
   );
 }

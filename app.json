@@ -8,14 +8,35 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "permissions": [
+      "ACCESS_FINE_LOCATION",
+      "ACCESS_COARSE_LOCATION"
+    ],
     "ios": {
-      "supportsTablet": true
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app requires location access to show your position on the map."
+      },
+      "supportsTablet": true,
+      "config": {
+        "googleMapsApiKey": "AIzaSyB_UyBdjsm2HAGiD4c-0DKdRqv1tjyqS04"
+      },
+      "bundleIdentifier": "com.hxrshmxllow.HackRU25"
     },
     "android": {
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyB_UyBdjsm2HAGiD4c-0DKdRqv1tjyqS04"
+        }
+      },
+      "package": "com.hxrshmxllow.HackRU25"
     },
     "web": {
       "bundler": "metro",
