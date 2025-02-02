@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, Image, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../firebaseConfig"; 
@@ -54,7 +54,7 @@ export default function RegisterScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Register</Text>
+      <Image source={require("../../assets/images/logo.png")} style={styles.logo} />
       <View style={styles.userTypeContainer}>
         <TouchableOpacity 
           style={[styles.userTypeButton, userType === 'rider' && styles.selectedButton]} 
@@ -108,5 +108,6 @@ const styles = StyleSheet.create({
     borderColor: '#cc0033', 
   },
   userTypeText: { fontSize: 16, fontWeight: 'bold', color: '#cc0033' },
+  logo: {marginBottom: 40}
 });
 

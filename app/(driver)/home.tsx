@@ -1,11 +1,12 @@
 import { Image, StyleSheet, Platform, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { useRef, useState, useEffect } from 'react';
-import { getFirestore, collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MapViewDirections from "react-native-maps-directions";
 import { Stack, useRouter } from "expo-router";
+import { auth } from "../../firebaseConfig"
 
 export default function HomeScreen() {
   const [expandedRideId, setExpandedRideId] = useState(null);
@@ -82,6 +83,16 @@ export default function HomeScreen() {
     fetchRideRequests();
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await auth.signOut(); 
+      router.replace("/(auth)/login"); 
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
+  };
+  
+
   const getUserInfo = async (userId) => {
     try {
       let userRef = doc(db, "riders", userId);
@@ -147,11 +158,11 @@ export default function HomeScreen() {
                 </View>
                 <View style={styles.bottomrow}>
                 <Text style={styles.pickup}>
-                  Pickup: {addresses[ride.id] ? addresses[ride.id].pickup : "Fetching..."}
+                  {addresses[ride.id] ? addresses[ride.id].pickup : "Fetching..."}
                 </Text>
                 <MaterialCommunityIcons name="arrow-right" size={20} color="black"/>
                 <Text style={styles.dropoff}>
-                  Dropoff: {addresses[ride.id] ? addresses[ride.id].dropoff : "Fetching..."}
+                  {addresses[ride.id] ? addresses[ride.id].dropoff : "Fetching..."}
                 </Text>
                 </View>
 
@@ -186,26 +197,43 @@ export default function HomeScreen() {
                       />
                     </MapView>
                     <View style={styles.ridesBottomContainer}>
-                      <Text style={styles.durationText}>ETA: {ride.duration} min</Text>
-                      <Text style={styles.costText}>Cost: ${ride.cost.toFixed(2)}</Text>
-                      <TouchableOpacity 
-                      onPress={() => {
-                        console.log("Ride Selected:", ride.id);
+                      <View style={styles.infoContainer}>
+                        <Text style={styles.durationText}>ETA: {ride.duration} min</Text>
+                        <Text style={styles.costText}>Cost: ${ride.cost.toFixed(2)}</Text>
+                        </View>
+                        <TouchableOpacity 
+                        onPress={async () => {
+                          console.log("Ride Selected:", ride.id);
 
-                        router.replace({
-                          pathname: "/(driver)/route",
-                          params: {
-                            startLat: ride.startLocation.latitude,
-                            startLng: ride.startLocation.longitude,
-                            endLat: ride.endLocation.latitude,
-                            endLng: ride.endLocation.longitude
+                          // Reference the Firestore document
+                          const rideRef = doc(db, "rideRequests", ride.id);
+                          const driverId = auth.currentUser?.uid; 
+                          console.log(driverId)
+                          try {
+                            await updateDoc(rideRef, {
+                              status: "Request Accepted",
+                              paymentStatus: "Pending",
+                              driverId: driverId
+                            })
+                            console.log("Ride status updated to Picked Up with Payment Pending");
+                            router.replace({
+                              pathname: "/(driver)/route",
+                              params: {
+                                startLat: ride.startLocation.latitude,
+                                startLng: ride.startLocation.longitude,
+                                endLat: ride.endLocation.latitude,
+                                endLng: ride.endLocation.longitude
+                              }
+                            });
+
+                          } catch (error) {
+                            console.error("Error updating ride status:", error);
                           }
-                        });
-                      }} 
-                      style={styles.continueButton}
-                    >
-                      <Text style={styles.buttonText}>Accept Ride</Text>
-                    </TouchableOpacity>
+                        }} 
+                        style={styles.continueButton}
+                      >
+                        <Text style={styles.buttonText}>Accept Ride</Text>
+                      </TouchableOpacity>
                     </View>
                   </View>
                 )}
@@ -213,7 +241,14 @@ export default function HomeScreen() {
             </TouchableOpacity>
           ))}
         </View>
-        <View style={styles.bottomContainer}></View>
+        <View style={styles.bottomContainer}>
+          <TouchableOpacity onPress={handleLogout}>
+            <MaterialCommunityIcons name="logout" size={40} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.replace("/(driver)/home")}>
+            <MaterialCommunityIcons name="home" size={40} color="white" />
+          </TouchableOpacity>
+        </View>
       </View>
     </>
   );
@@ -303,7 +338,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: "100%",
     height: 110,
-    backgroundColor: "#CC0033"
+    backgroundColor: "#CC0033",
+    padding: 17,
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
   },
   ridesBottomContainer: {
     flexDirection: 'row', 
@@ -320,5 +358,5 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontWeight: "bold"
-  }
+  },
 });

@@ -48,7 +48,7 @@ const PaymentScreen: React.FC = () => {
       onPress={() => setPaymentMethod("applepay")}
     >
       <Text style={[styles.methodText, paymentMethod === "applepay" && styles.activeText]}>
-        🍏 Apple Pay
+       Apple Pay
       </Text>
     </TouchableOpacity>
   )}

@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../../firebaseConfig"; 
@@ -23,9 +23,19 @@ export default function LoginScreen() {
       const riderDoc = await getDoc(doc(db, "riders", user.uid));
       if (riderDoc.exists()) {
         console.log("User is a Rider");
-        router.replace("/(rider)/home");
+    
+        const riderData = riderDoc.data(); // Get the rider's data
+    
+        if (riderData.status === "Ride Pending") {
+            console.log("Redirecting to pending screen...");
+            router.replace("/(rider)/pending"); // 🚀 Redirect to pending page
+        } else {
+            console.log("Redirecting to home screen...");
+            router.replace("/(rider)/home"); // 🚀 Redirect to home page
+        }
+        
         return;
-      }
+    }
       const driverDoc = await getDoc(doc(db, "drivers", user.uid));
       if (driverDoc.exists()) {
         console.log("User is a Driver");
@@ -40,7 +50,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <Image source={require("../../assets/images/logo.png")} style={styles.logo} />
 
       <TextInput 
         placeholder="Email" 
@@ -76,5 +86,6 @@ const styles = StyleSheet.create({
   input: { width: '100%', padding: 12, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, backgroundColor: '#fff', marginBottom: 10 },
   button: { backgroundColor: '#cc0033', padding: 12, borderRadius: 8, width: '100%', alignItems: 'center', marginTop: 10 },
   buttonText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
-  link: { marginTop: 15, color: '#cc0033' }
+  link: { marginTop: 15, color: '#cc0033' },
+  logo: {marginBottom: 40}
 });

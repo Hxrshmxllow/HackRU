@@ -5,16 +5,18 @@ import MapViewDirections from "react-native-maps-directions";
 import { useRef, useState, useEffect } from 'react';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
-import { Stack } from "expo-router";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { Stack, useRouter } from "expo-router";
+import { collection, addDoc, serverTimestamp, updateDoc, doc } from "firebase/firestore";
 import { auth, db } from "../../firebaseConfig"; 
 import { GeoPoint } from "firebase/firestore"; 
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export default function HomeScreen() {
-  const origin = { latitude: 40.5006, longitude: -74.4474 }; 
+  const origin = { latitude: 40.5235, longitude: -74.4580 };
   const [destination, setDestination] = useState(null);
   const [duration, setDuration] = useState(null);
   const mapRef = useRef(null);
+  const router = useRouter();
   const [, forceUpdate] = useState();
   useEffect(() => {
     if (mapRef.current && destination) {
@@ -43,14 +45,29 @@ export default function HomeScreen() {
         startLocation: new GeoPoint(origin.latitude, origin.longitude),
         endLocation: new GeoPoint(destination.latitude, destination.longitude),
         timestamp: serverTimestamp(), 
-        cost: 1 + Math.round(duration) * 0.5, 
+        cost: 1 + Math.round(duration) * 0.3, 
         duration: Math.round(duration),
+        status: "Request Pending",
+        paymentStatus: "Pending",
+        driverId: null
       };
   
       const rideRef = await addDoc(collection(db, "rideRequests"), rideData);
       console.log("Ride request added with ID:", rideRef.id);
+      const userRef = doc(db, "riders", user.uid);
+      await updateDoc(userRef, { status: "Ride Pending" });    
+      console.log("Ride request added to user"); 
+      router.replace("/(rider)/pending")
     } catch (error) {
       console.error("Error adding ride request:", error.message);
+    }
+  };
+  const handleLogout = async () => {
+    try {
+      await auth.signOut(); 
+      router.replace("/(auth)/login"); 
+    } catch (error) {
+      console.error("Logout Error:", error);
     }
   };
 
@@ -142,9 +159,16 @@ export default function HomeScreen() {
         style={styles.continueContainer} 
         onPress={handleRideRequest}
       >
-        <Text style={styles.buttonText}>See Available Commuters</Text>
+        <Text style={styles.buttonText}>Send Ride Request</Text>
       </TouchableOpacity>
-      <View style={styles.bottomContainer}></View>
+      <View style={styles.bottomContainer}>
+        <TouchableOpacity onPress={handleLogout}>
+          <MaterialCommunityIcons name="logout" size={40} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.replace("/(rider)/home")}>
+          <MaterialCommunityIcons name="home" size={40} color="white" />
+        </TouchableOpacity>
+      </View>
     </View>
     </>
   );
@@ -217,6 +241,9 @@ const styles = StyleSheet.create({
     top: 120,
     width: "100%",
     height: 110,
-    backgroundColor: "#CC0033"
+    backgroundColor: "#CC0033",
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    padding: 20
   },
 });
